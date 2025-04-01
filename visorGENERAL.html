@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tablas de Clasificación AR School Quiz</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 20px;
+      }
+      h1 {
+        text-align: center;
+        font-size: 36px;
+        margin-bottom: 20px;
+      }
+      #controls {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      #categoryButtons {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      #categoryButtons button {
+        margin: 0 5px;
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #f0f0f0;
+        border: 1px solid #666;
+        cursor: pointer;
+      }
+      /* Botón activo con fondo verde claro */
+      #categoryButtons button.active {
+        background-color: #90ee90;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: auto;
+      }
+      th, td {
+        border: 1px solid #666;
+        padding: 8px;
+        font-size: 26px;
+        text-align: center;
+      }
+      th {
+        background-color: #90ee90; /* verde claro */
+      }
+    </style>
+  </head>
+  <body>
+    <h1>- Tablas de Clasificación AR School Quiz -</h1>
+    <div id="controls">
+      <label for="numAnswers">Respuestas:</label>
+      <select id="numAnswers">
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+      </select>
+    </div>
+    <div id="categoryButtons">
+      <button data-prefix="leaderboard_">Tablas de Multiplicar</button>
+      <button data-prefix="Capleaderboard_">Capitales</button>
+      <button data-prefix="Musicleaderboard_">Notas Musicales</button>
+      <button data-prefix="Calcleaderboard_">Cálculo</button>
+    </div>
+    <div id="leaderboardContainer">
+      <table id="leaderboardTable">
+        <thead>
+          <tr>
+            <th>Pos</th>
+            <th>Nombre</th>
+            <th>Puntos</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Los datos se cargarán en tiempo real -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Importación de Firebase (Módulos ES) -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+      import {
+        getFirestore,
+        collection,
+        query,
+        orderBy,
+        getDocs
+      } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+      // Configuración de Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyD5EAMg-0p54f8bPq8SVdZ_ePg5Xso3cmg",
+        authDomain: "arm1-acbba.firebaseapp.com",
+        projectId: "arm1-acbba",
+        storageBucket: "arm1-acbba.firebasestorage.app",
+        messagingSenderId: "408825932019",
+        appId: "1:408825932019:web:10f2079b590b4c9ca3af86",
+        measurementId: "G-S78TM6PVRL"
+      };
+
+      // Inicializamos Firebase y Firestore
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      const numAnswersSelect = document.getElementById("numAnswers");
+      const leaderboardTableBody = document.querySelector("#leaderboardTable tbody");
+      const categoryButtons = document.querySelectorAll("#categoryButtons button");
+
+      let currentPrefix = ""; // prefijo de la colección activa
+      let updateInterval;
+      // Registro previo por nombre para detectar nuevos registros o cambios en el puntaje
+      let previousRecords = {};
+
+      // Función para reproducir un beep usando Web Audio API con frecuencia de 800 Hz
+      function playBeep() {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        oscillator.type = "sine";
+        oscillator.frequency.value = 2000; // Frecuencia aumentada a 800 Hz
+        oscillator.connect(audioContext.destination);
+        oscillator.start();
+        setTimeout(() => {
+          oscillator.stop();
+          audioContext.close();
+        }, 100); // beep de 100ms
+      }
+
+      // Función para consultar y actualizar la tabla según la colección
+      async function updateLeaderboard(prefix, numAnswers) {
+        const collectionName = `${prefix}${numAnswers}`;
+        const q = query(collection(db, collectionName), orderBy("score", "desc"));
+        try {
+          const snapshot = await getDocs(q);
+          leaderboardTableBody.innerHTML = "";
+          let pos = 1;
+          // Objeto para almacenar los registros actuales
+          let currentRecords = {};
+
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            const name = data.name;
+            const score = data.score;
+            currentRecords[name] = score;
+
+            const row = document.createElement("tr");
+            const posCell = document.createElement("td");
+            posCell.innerText = pos++;
+            const nameCell = document.createElement("td");
+            nameCell.innerText = name;
+            const scoreCell = document.createElement("td");
+            scoreCell.innerText = score;
+
+            row.appendChild(posCell);
+            row.appendChild(nameCell);
+            row.appendChild(scoreCell);
+
+            // Si el nombre no estaba registrado previamente o si su puntaje ha cambiado, se marca como actualizado
+            if (!(name in previousRecords) || previousRecords[name] !== score) {
+              row.style.backgroundColor = "lightblue";
+              playBeep();
+              setTimeout(() => {
+                row.style.backgroundColor = "";
+              }, 3000); // Ahora 4000 ms (4 segundos)
+            }
+
+            leaderboardTableBody.appendChild(row);
+          });
+          // Actualizamos previousRecords para la siguiente iteración
+          previousRecords = currentRecords;
+        } catch (error) {
+          console.error("Error actualizando el leaderboard:", error);
+        }
+      }
+
+      // Función para iniciar la actualización periódica (cada segundo)
+      function startUpdating() {
+        if (updateInterval) clearInterval(updateInterval);
+        updateInterval = setInterval(() => {
+          updateLeaderboard(currentPrefix, numAnswersSelect.value);
+        }, 3000);
+      }
+
+      // Función para marcar el botón activo
+      function setActiveButton(prefix) {
+        categoryButtons.forEach((btn) => {
+          if (btn.getAttribute("data-prefix") === prefix) {
+            btn.classList.add("active");
+          } else {
+            btn.classList.remove("active");
+          }
+        });
+      }
+
+      // Agregar evento a cada botón de categoría
+      categoryButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          currentPrefix = btn.getAttribute("data-prefix");
+          setActiveButton(currentPrefix);
+          // Reiniciamos el registro de registros al cambiar de categoría
+          previousRecords = {};
+          updateLeaderboard(currentPrefix, numAnswersSelect.value);
+          startUpdating();
+        });
+      });
+
+      // Actualizamos al cambiar el número de respuestas
+      numAnswersSelect.addEventListener("change", () => {
+        if (currentPrefix !== "") {
+          previousRecords = {};
+          updateLeaderboard(currentPrefix, numAnswersSelect.value);
+        }
+      });
+
+      // Iniciamos con una categoría por defecto, por ejemplo, Tablas de Multiplicar:
+      currentPrefix = "leaderboard_";
+      setActiveButton(currentPrefix);
+      updateLeaderboard(currentPrefix, numAnswersSelect.value);
+      startUpdating();
+    </script>
+  </body>
+</html>
