@@ -30,10 +30,17 @@
         background-color: #fbf6e5;
         border: 1px solid #666;
         cursor: pointer;
+        border-radius: 10px; /* Bordes redondeados para los botones */
       }
       /* Botón activo con fondo verde claro */
       #categoryButtons button.active {
         background-color: #90ee90;
+      }
+      /* Envolver la tabla en un contenedor para aplicar border-radius */
+      #leaderboardContainer {
+        width: 100%;
+        overflow: hidden; /* Para que se apliquen los bordes redondeados */
+        border-radius: 10px;
       }
       table {
         width: 100%;
@@ -170,7 +177,7 @@
               playBeep();
               setTimeout(() => {
                 row.style.backgroundColor = "";
-              }, 3000); // Ahora 4000 ms (4 segundos)
+              }, 3000); // ahora 3000 ms (3 segundos)
             }
 
             leaderboardTableBody.appendChild(row);
@@ -182,7 +189,7 @@
         }
       }
 
-      // Función para iniciar la actualización periódica (cada segundo)
+      // Función para iniciar la actualización periódica (cada 3 segundos)
       function startUpdating() {
         if (updateInterval) clearInterval(updateInterval);
         updateInterval = setInterval(() => {
