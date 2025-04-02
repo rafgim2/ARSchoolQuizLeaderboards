@@ -124,22 +124,8 @@
       const categoryButtons = document.querySelectorAll("#categoryButtons button");
 
       let currentPrefix = ""; // prefijo de la colección activa
-      // Registro previo por nombre para detectar nuevos registros o cambios en el puntaje
+      // Registro previo por nombre (ya no se usa para resaltar o reproducir beep)
       let previousRecords = {};
-
-      // Función para reproducir un beep usando Web Audio API
-      function playBeep() {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        oscillator.type = "sine";
-        oscillator.frequency.value = 2000;
-        oscillator.connect(audioContext.destination);
-        oscillator.start();
-        setTimeout(() => {
-          oscillator.stop();
-          audioContext.close();
-        }, 100);
-      }
 
       // Función para consultar y actualizar la tabla según la colección
       async function updateLeaderboard(prefix, numAnswers) {
@@ -169,15 +155,7 @@
             row.appendChild(nameCell);
             row.appendChild(scoreCell);
 
-            // Marcar como actualizado si es nuevo o ha cambiado
-            if (!(name in previousRecords) || previousRecords[name] !== score) {
-              row.style.backgroundColor = "lightblue";
-              playBeep();
-              setTimeout(() => {
-                row.style.backgroundColor = "";
-              }, 3000);
-            }
-
+            // Se eliminó el resaltado y el beep
             leaderboardTableBody.appendChild(row);
           });
           previousRecords = currentRecords;
@@ -186,9 +164,6 @@
         }
       }
 
-      // Eliminar la función de actualización periódica (setInterval)
-      // function startUpdating() { ... }
-
       // Agregar evento a cada botón de categoría
       categoryButtons.forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -196,7 +171,6 @@
           setActiveButton(currentPrefix);
           previousRecords = {};
           updateLeaderboard(currentPrefix, numAnswersSelect.value);
-          // Se elimina la actualización periódica
         });
       });
 
@@ -223,7 +197,6 @@
       currentPrefix = "leaderboard_";
       setActiveButton(currentPrefix);
       updateLeaderboard(currentPrefix, numAnswersSelect.value);
-      // Se ha eliminado la llamada a startUpdating(), por lo que no se actualiza periódicamente
     </script>
   </body>
 </html>
