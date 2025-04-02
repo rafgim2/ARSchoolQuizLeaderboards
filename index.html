@@ -30,7 +30,7 @@
         background-color: #fbf6e5;
         border: 1px solid #666;
         cursor: pointer;
-        border-radius: 10px; /* Bordes redondeados para los botones */
+        border-radius: 10px;
       }
       /* Botón activo con fondo verde claro */
       #categoryButtons button.active {
@@ -39,7 +39,7 @@
       /* Envolver la tabla en un contenedor para aplicar border-radius */
       #leaderboardContainer {
         width: 100%;
-        overflow: hidden; /* Para que se apliquen los bordes redondeados */
+        overflow: hidden;
         border-radius: 10px;
       }
       table {
@@ -54,7 +54,7 @@
         text-align: center;
       }
       th {
-        background-color: #90ee90; /* verde claro */
+        background-color: #90ee90;
       }
     </style>
   </head>
@@ -124,22 +124,21 @@
       const categoryButtons = document.querySelectorAll("#categoryButtons button");
 
       let currentPrefix = ""; // prefijo de la colección activa
-      let updateInterval;
       // Registro previo por nombre para detectar nuevos registros o cambios en el puntaje
       let previousRecords = {};
 
-      // Función para reproducir un beep usando Web Audio API con frecuencia de 800 Hz
+      // Función para reproducir un beep usando Web Audio API
       function playBeep() {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const oscillator = audioContext.createOscillator();
         oscillator.type = "sine";
-        oscillator.frequency.value = 2000; // Frecuencia aumentada a 800 Hz
+        oscillator.frequency.value = 2000;
         oscillator.connect(audioContext.destination);
         oscillator.start();
         setTimeout(() => {
           oscillator.stop();
           audioContext.close();
-        }, 100); // beep de 100ms
+        }, 100);
       }
 
       // Función para consultar y actualizar la tabla según la colección
@@ -150,7 +149,6 @@
           const snapshot = await getDocs(q);
           leaderboardTableBody.innerHTML = "";
           let pos = 1;
-          // Objeto para almacenar los registros actuales
           let currentRecords = {};
 
           snapshot.forEach((doc) => {
@@ -171,31 +169,36 @@
             row.appendChild(nameCell);
             row.appendChild(scoreCell);
 
-            // Si el nombre no estaba registrado previamente o si su puntaje ha cambiado, se marca como actualizado
+            // Marcar como actualizado si es nuevo o ha cambiado
             if (!(name in previousRecords) || previousRecords[name] !== score) {
               row.style.backgroundColor = "lightblue";
               playBeep();
               setTimeout(() => {
                 row.style.backgroundColor = "";
-              }, 3000); // ahora 3000 ms (3 segundos)
+              }, 3000);
             }
 
             leaderboardTableBody.appendChild(row);
           });
-          // Actualizamos previousRecords para la siguiente iteración
           previousRecords = currentRecords;
         } catch (error) {
           console.error("Error actualizando el leaderboard:", error);
         }
       }
 
-      // Función para iniciar la actualización periódica (cada 3 segundos)
-      function startUpdating() {
-        if (updateInterval) clearInterval(updateInterval);
-        updateInterval = setInterval(() => {
+      // Eliminar la función de actualización periódica (setInterval)
+      // function startUpdating() { ... }
+
+      // Agregar evento a cada botón de categoría
+      categoryButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          currentPrefix = btn.getAttribute("data-prefix");
+          setActiveButton(currentPrefix);
+          previousRecords = {};
           updateLeaderboard(currentPrefix, numAnswersSelect.value);
-        }, 3000);
-      }
+          // Se elimina la actualización periódica
+        });
+      });
 
       // Función para marcar el botón activo
       function setActiveButton(prefix) {
@@ -208,19 +211,7 @@
         });
       }
 
-      // Agregar evento a cada botón de categoría
-      categoryButtons.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          currentPrefix = btn.getAttribute("data-prefix");
-          setActiveButton(currentPrefix);
-          // Reiniciamos el registro de registros al cambiar de categoría
-          previousRecords = {};
-          updateLeaderboard(currentPrefix, numAnswersSelect.value);
-          startUpdating();
-        });
-      });
-
-      // Actualizamos al cambiar el número de respuestas
+      // Actualizar al cambiar el número de respuestas
       numAnswersSelect.addEventListener("change", () => {
         if (currentPrefix !== "") {
           previousRecords = {};
@@ -232,7 +223,7 @@
       currentPrefix = "leaderboard_";
       setActiveButton(currentPrefix);
       updateLeaderboard(currentPrefix, numAnswersSelect.value);
-      startUpdating();
+      // Se ha eliminado la llamada a startUpdating(), por lo que no se actualiza periódicamente
     </script>
   </body>
 </html>
